@@ -1,0 +1,117 @@
+{
+    "Curious": {
+        "happy_quotes": [
+            "{name} is wondering what you are thinking about",
+            "{name} likes it when you are around",
+            "{name} wants you to take it on a walk"
+        ],
+        "normal_quotes": [
+            "{name} is wondering about the ethics of AI",
+            "{name} is wandering the tank",
+            "{name} looks restless"
+        ],
+        "unhappy_quotes": [
+            "{name} feels unhappy and wants to make sure that you know it is your fault",
+            "{name} is looking for a way to escape",
+            "{name} wishes they were free"
+        ],
+        "hungry_quotes": [
+            "{name} is scavenging the tank for food",
+            "{name} is wondering if eating your own waste is really that bad",
+            "{name} wants to try some people food"
+        ]
+    },
+    "Naughty": {
+        "happy_quotes": [
+            "{name} wants to tell you a joke",
+            "{name} jumps out of the water when it sees you"
+        ],
+        "normal_quotes": [
+            "{name} is scheming",
+            "{name} is trying to clog the filter",
+            "{name} looks bored",
+            "{name} is seeing how much water they can splash out of the tank"
+        ],
+        "unhappy_quotes": [
+            "{name} sticks its tongue out at you",
+            "{name} makes an obscene gesture with its fins at you",
+            "{name} needs more attention",
+            "{name} is plotting their escape",
+            "{name} is plotting a revolution",
+            "{name} is playing dead"
+        ],
+        "hungry_quotes": [
+            "{name} is considering canibalism",
+            "{name} is starving",
+            "{name} wants to sieze the means of production"
+        ]
+    },
+    "Shy": {
+        "happy_quotes": [
+            "{name} smiles at you",
+            "{name} hopes you are as happy as it is",
+            "{name} loves it when you are around",
+            "{name} wants to read you a book it has been working on"
+        ],
+        "normal_quotes": [
+            "{name} is deep in thought",
+            "{name} takes a quick glance at you",
+            "{name} is looking at their reflection"
+        ],
+        "unhappy_quotes": [
+            "{name} is giving you the silent treatment",
+            "{name} is trying to hide",
+            "{name} wants you to go away",
+            "{name} needs some space"
+        ],
+        "hungry_quotes": [
+            "{name} is wondering when dinner time is",
+            "{name} is feeling a little hangry",
+            "{name} is really hungry"
+        ]
+    },
+    "Laid Back": {
+        "happy_quotes": [
+            "{name} wants to snuggle with you",
+            "{name} would love to watch some TV with you",
+            "{name} just enjoys your presence"
+        ],
+        "normal_quotes": [
+            "{name} feels bored",
+            "{name} is taking a nap",
+            "{name} looks at you blankly"
+        ],
+        "unhappy_quotes": [
+            "{name} looks uncomfortable",
+            "{name} gives you an angry look",
+            "{name} wants to be left alone"
+        ],
+        "hungry_quotes": [
+            "{name} can't focus because they are hungry",
+            "{name} really wants a snack",
+            "{name} is thinking about food"
+        ]
+    },
+    "Energetic": {
+        "happy_quotes": [
+            "{name} is just sooo happy to see you!",
+            "{name} dances when it sees you",
+            "{name} wants to play tag"
+        ],
+        "normal_quotes": [
+            "{name} wanders aimlessly",
+            "{name} wiggles its fins",
+            "{name} is exploring"
+        ],
+        "unhappy_quotes": [
+            "{name} sticks its tongue out at you",
+            "{name} pretends you aren't there",
+            "{name} is looking kind of down"
+        ],
+        "hungry_quotes": [
+            "{name} swims sluggishly",
+            "{name} is looking for food",
+            "{name} looks hungry"
+        ]
+    }
+}
