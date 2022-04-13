@@ -1,7 +1,8 @@
 A virtual command line aquarium
 
 # Gettings started
-git clone .....
+git clone https://github.com/jdgoal512/VirtualFish.git
+
 python3 fish.py
 
 Remember to check in on your fish and feed them every day. They get hungry too...
