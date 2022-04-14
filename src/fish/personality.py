@@ -1,7 +1,20 @@
-import random
 import json
+import random
+from typing import List
 
 class Personality:
+    """Personality of a fish.
+
+    Has quotes for when a fish of the given personality is happy, normal,
+    stressed, and is hungry.
+
+    Attributes:
+        name: Name of the personality
+        happy_quotes: List of quotes for when it has very low stress
+        normal_quotes: List of quotes for when it as moderately low stress
+        unhappy_quotes: List of quotes for when it has high stress
+        hungry_quotes: List of quotes for when it is hungry
+    """
     def __init__(self, name: str, happy_quotes, normal_quotes, unhappy_quotes, hungry_quotes):
         self.name = name
         self.happy_quotes = happy_quotes
@@ -10,6 +23,15 @@ class Personality:
         self.hungry_quotes = hungry_quotes
 
     def get_quote(self, name, stress, hunger):
+        """Gets a random quote based on the fish's personality.
+
+        Args:
+            stress: Float with fish's stress level, 0 being no stress.
+            hunger: Float with fish's hunger level, 0 being completely full.
+
+        Returns:
+            String with a quote based on how the fish is feeling.
+        """
         possible_quotes = []
         if stress < 0.20:
             possible_quotes += self.happy_quotes
@@ -23,9 +45,18 @@ class Personality:
         return quote.replace("{name}", name)
 
     def to_json(self):
+        """Returns the name of the personality"""
         return self.name
 
-def get_personalities(filename='personalities.json'):
+def get_personalities(filename='data/personalities.json') -> List[Personality]:
+    """Reads in a list of personalites from a file
+
+    Args:
+        filename: Filename to read the personalities from
+
+    Returns:
+        List of personalites read in from the json file
+    """
     with open(filename) as json_file:
         json_personalities = json.load(json_file)
         all_p = {}
@@ -38,21 +69,22 @@ def get_personalities(filename='personalities.json'):
         return all_p
 
 def main():
-    all_p = get_personalities('personalities.json')
+    """Prints all the personalities read in from the file"""
+    all_p = get_personalities('../../data/personalities.json')
     for p_name, p in all_p.items():
         print(f'### {p_name} ###')
         print('Happy:')
         for _ in range(3):
-            print(p.get_quote(fish_name=f'{p_name} Fish', stress=0, hunger=0))
+            print(p.get_quote(name=f'{p_name} Fish', stress=0, hunger=0))
         print('Normal:')
         for _ in range(3):
-            print(p.get_quote(fish_name=f'{p_name} Fish', stress=0.3, hunger=0))
+            print(p.get_quote(name=f'{p_name} Fish', stress=0.3, hunger=0))
         print('Unhappy:')
         for _ in range(3):
-            print(p.get_quote(fish_name=f'{p_name} Fish', stress=1, hunger=0))
+            print(p.get_quote(name=f'{p_name} Fish', stress=1, hunger=0))
         print('Hungry:')
         for _ in range(3):
-            print(p.get_quote(fish_name=f'{p_name} Fish', stress=0.3, hunger=1))
+            print(p.get_quote(name=f'{p_name} Fish', stress=0.3, hunger=1))
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
-"""
-ANSI escape characters for formatting colored text
-"""
+"""ANSI escape characters for formatting colored text."""
 from enum import Enum
+
+
 class Color(Enum):
     RESET = '\033[0m'
     BOLD = '\033[1m'

@@ -5,6 +5,17 @@ from src.fish.personality import Personality
 
 
 class Fish:
+    """Fish to put in the aquarium.
+
+    Attributes:
+        name: The name of the fish.
+        species: The species of the fish.
+        personality: The personality of the fish.
+        last_fed: Timestamp of when it was last fed.
+        birth: Timestamp with when it was first created.
+        stress: Float from 0-1 of how stressed the fish is, 0 being no stress.
+        last_checkin: Timestamp of when the stress was last updated.
+    """
     def __init__(self,
                  name: str,
                  species: Species,
@@ -30,12 +41,34 @@ class Fish:
         else:
             self.last_checkin = time.time()
 
-    def get_status(self):
+    def get_status(self) -> str:
+        """Gets a summary on the fish's current status.
+
+        Returns:
+            String with the fish's name, species, and a quote based on how
+            it is feeling
+        """
         self.checkin()
-        quote = self.personality.get_quote(name=self.name, stress=self.stress, hunger=self.get_hunger())
+        quote = self.personality.get_quote(name=self.name,
+                                           stress=self.stress,
+                                           hunger=self.get_hunger())
         return f'{self.name} ({self.species.name}): {quote}'
 
+    def get_art(self) -> str:
+        """Gets ascii art for the fish
+
+        The art is based on the fish's age and species
+
+        Returns:
+            String with ascii art for the fish
+        """
+        return self.species.get_art(time.time() - self.birth)
+
     def feed(self):
+        """Feed the fish.
+
+        Updates the time since it was last fed if it hasn't eaten recently.
+        """
         hunger = (time.time() - self.last_fed)/self.species.hunger_time
         if hunger > 0.2:
             self.last_fed = time.time()
@@ -43,6 +76,12 @@ class Fish:
             print(f'{self.name} is not hungry yet')
 
     def get_stress_text(self) -> str:
+        """Gets a string with how stressed the fish is
+
+        Returns:
+            String with short message based on the fish's
+            stress level
+        """
         if self.stress < 0.05:
             return 'Very happy'
         if self.stress < 0.1:
@@ -55,39 +94,71 @@ class Fish:
             return 'Stressed'
         return 'Dangerously stressed'
 
-    def get_current_stress(self, timestamp: float = None):
+    def get_current_stress(self, timestamp: float = None) -> float:
+        """Gets the fish's current stress level
+
+        Stress is based off how long it has been since it has last eaten.
+
+        Args:
+            timestamp: If provided, it calculate the fish's stress at the given
+                       time. If not provided, it will calculate the stress
+                       based off the current time.
+       Returns:
+           Float between 0 and 1 with the fish's stress level, with 0 being
+           no stress.
+        """
         if not timestamp:
             timestamp = time.time()
 
         hunger = self.get_hunger(timestamp)
         hunger = max(0, (hunger - 0.5)/0.5)
-        # TODO: add other stressors
         stress = hunger
         return stress
 
     def checkin(self, timestamp: float = None):
-        """
-        Reavaluate stress, etc
+        """Reavaluate the fish's stress
 
-        Should not be used without a timestamp if over 24 hours has
-        passed since the last checkin
+        Updates the fish's stress and the timestamp for when the last check in
+        occurred. Stress is adjusted based on how long it has been since the
+        last check in. If 24 hours have passed since the last check in the old
+        and new stress are averaged. Should not be used without a timestamp if
+        over 24 hours has passed since the last check in. Instead this should
+        be called multiple times with the timestamp for when the check in would
+        have occurred every 24 hours.
+
+        Args:
+            timestamp: If given, perform the check in as if it were that time.
+                       Otherwise check in using the current time.
         """
         if not timestamp:
             timestamp = time.time()
         DAY = 60*60*24
         time_delta = min(DAY, timestamp - self.last_checkin)
-        new_weight = 0.5 * time_delta / DAY
+        new_weight = 0.5*time_delta/DAY
         new_stress = self.get_current_stress(self.last_checkin + time_delta)
-        self.stress = ((1 - new_weight) * self.stress) + (new_weight * new_stress)
+        self.stress = (1 - new_weight)*self.stress + new_weight*new_stress
         self.last_checkin = timestamp
 
     def get_hunger(self, timestamp: float = None) -> float:
+        """Gets how hungry the fish is.
+
+        Based on the time since it was last fed and how quickly its species
+        gets hungry.
+
+        Args:
+            timestamp: If provided, it will calculate how hungry the fish was
+                       at that time. Otherwise it will use the current time.
+
+        Returns:
+            Float from 0-1 of how hungry the fish is with 0 being completely full
+        """
         if not timestamp:
             timestamp = time.time()
         hunger = (timestamp - self.last_fed)/self.species.hunger_time
         return hunger
 
     def get_hunger_text(self, timestamp: float = None) -> str:
+        """Get short message of how hungry the fish is"""
         hunger = self.get_hunger(timestamp)
         if hunger > 1:
             return 'Starved to death'
@@ -101,7 +172,12 @@ class Fish:
             return 'A little hungry'
         return 'Full'
 
-    def to_json(self):
+    def to_json(self) -> dict:
+        """Gets dict for serializing to json
+
+        Returns:
+            Dict with all relevant information to serialize to json
+        """
         json_object = {
             "name": self.name,
             "species": self.species.name,
@@ -112,19 +188,3 @@ class Fish:
             "last_checkin": self.last_checkin,
         }
         return json_object
-
-
-def main():
-    fish = Fish('Molly', 'Mosquitofish')
-    print(fish.get_status())
-    fish.feed()
-    print(fish.get_status())
-    j_fish = fish.to_json()
-    print(j_fish)
-    print(fish.to_json())
-    fish_copy = Fish.from_json(j_fish)
-
-    breakpoint()
-
-if __name__ == '__main__':
-    main()
