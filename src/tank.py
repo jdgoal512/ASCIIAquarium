@@ -54,30 +54,48 @@ class Tank:
     Attributes:
         width: Width of the interior of the tank in characters.
         height: Height of the interior of the tank in characters.
+        max_fish: The maximum number of fish you can put in the tank
         fish: List of fish in the tank.
         fish_builder: Creates fish that are read in from json.
     """
-    def __init__(self, width: int = 30, height: int = 10):
+    def __init__(self, width: int = 30, height: int = 10, max_fish: int = 10):
         self.width = width
         self.height = height
+        self.max_fish = max_fish
         self.fish = []
         self.fish_builder = FishBuilder()
 
     def add_fish(self, fish: Fish):
-        """Adds a fish to the tank.
+        """Adds a fish to the tank as long as there is still room in the tank.
 
         Args:
             fish: The fish to be added
         """
-        self.fish += [fish]
+        if not self.is_full():
+            self.fish += [fish]
+        else:
+            print('Sorry the tank is full.')
+
+    def remove_fish(self, fish_name: str):
+        """Remove fish with given name from the tank"""
+        for fish in self.fish:
+            if fish.name == fish_name:
+                print(f'Goodbye {fish_name}')
+                self.fish.remove(fish)
+                return
+        print('Error, could not remove {fish_name}')
+
 
     def feed(self):
         """Feed all fish in the tank"""
         for f in self.fish:
             f.feed()
+        self.print()
 
     def draw_tank(self) -> List[str]:
         """Create ascii art of the tank with all the fish inside.
+
+        Fish are randomly flipped and placed throughout the tank.
 
         Returns:
             A list of strings with the ascii art for the tank
@@ -100,6 +118,9 @@ class Tank:
 
         return tank_text
 
+    def is_full(self):
+        """Returns whether or not the tank is full"""
+        return len(self.fish) >= self.max_fish
 
     def print(self):
         """Print ascii art of the tank and fish status."""

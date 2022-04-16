@@ -1,6 +1,8 @@
 from typing import List
 import random
 
+import urwid
+
 from src.cmd_interface.color import Color
 from src.cmd_interface.command import Command
 from src.tank import Tank
@@ -11,15 +13,14 @@ class Interface:
 
     Attributes:
         tank: The tank
-        running: Whether or not the interface is running
         color: Whether or not to enable printing in color
         commands: List of commands the interface has
     """
     def __init__(self, tank: Tank, filename: str = 'save.json', color: bool = True):
         self.tank = tank
-        self.running = False
         self.filename = filename
         self.color = color
+        self.bottom_panel = None
         self.commands = [
             Command(name='help',
                     action=self.help,
@@ -66,9 +67,8 @@ class Interface:
         else:
             print(text, end=end)
 
-    def help(self, *args: List[str]):
+    def help(self, _):
         """Prints the help message."""
-        del args  # Unused
         self._print('Commands:', Color.YELLOW)
         for command in self.commands:
             if not command.hidden:
@@ -81,12 +81,11 @@ class Interface:
                     self._print(command.name, Color.CYAN, end='')
                 self._print(f': {command.help_text}')
 
-    def quit(self, *args: List[str]):
+    def quit(self, _):
         """Exit the command line interface."""
-        del args  # Unused
-        self._print('Exiting')
-        self.running = False
+        # self._print('Exiting')
         self.tank.save(self.filename)
+        raise urwid.ExitMainLoop()
 
     def _process_cmd(self, cmd: str):
         """Process a line of text.
@@ -106,81 +105,97 @@ class Interface:
         self._print('Invalid command, type "help" for help', Color.RED)
 
     def run(self):
-        """Enter the command line interface."""
-        self.running = True
-        self.help()
-        self.tank.print()
-        while self.running:
-            cmd = input('> ')
-            print('')
-            cmd = cmd.lower().strip()
-            self._process_cmd(cmd)
+        """Enter the urwid line interface."""
+        main_widget = urwid.Filler(urwid.Pile([urwid.Text('ASCII Aquarium'),
+                                   urwid.Divider(),
+                                   urwid.BoxAdapter(self.main_menu(), height=10)]))
+        loop = urwid.MainLoop(main_widget)
+        # loop = urwid.MainLoop(self.main_menu())
+        loop.run()
 
-    def menu(self, prompt: str, choices: List[str]) -> str:
-        """Creates a menu.
+    def main_menu(self):
+        body = []
+        for command in self.commands:
+            button = urwid.Button(command.name)
+            urwid.connect_signal(button, 'click', command.action)
+            body.append(urwid.AttrMap(button, None, focus_map='reversed'))
+        return urwid.ListBox(urwid.SimpleFocusListWalker(body))
 
-        The user is given a numbered list of options. Entering the number
-        or name of the item (not case sensitive) selects that item. If the
-        user gives an invalid input, they are prompted again until they give
-        valid input. The user can also quit the program by entering "q" or
-        "quit".
+    def menu(self, title: str, choices: List[str]):
+        body = [urwid.Text(title), urwid.Divider()]
+        for c in choices:
+            button = urwid.Button(c)
+            urwid.connect_signal(button, 'click', self.feed, c)
+            body.append(urwid.AttrMap(button, None, focus_map='reversed'))
+        list_box = urwid.ListBox(urwid.SimpleFocusListWalker(body))
+        return urwid.Overlay(list_box,
+                             bottom_w,
+                             align,
+                             width,
+                             valign,
+                             height)
 
-        Args:
-            prompt: String with a prompt/title for the menu.
-            choices: List of items the user can choose from.
+    # def menu(self, prompt: str, choices: List[str]) -> str:
+    #     """Creates a menu.
 
-        Returns:
-            String with the choice the user selected. If the user chose to
-            quit instead, None is returned instead.
+    #     The user is given a numbered list of options. Entering the number
+    #     or name of the item (not case sensitive) selects that item. If the
+    #     user gives an invalid input, they are prompted again until they give
+    #     valid input. The user can also quit the program by entering "q" or
+    #     "quit".
 
-        """
-        choice = None
-        while True:
-            self._print(prompt, Color.YELLOW)
-            for i, choice_name in enumerate(choices):
-                self._print(i+1, Color.CYAN, end='')
-                self._print(f'. {choice_name}')
-            choice = input('> ')
-            try:
-                index = int(choice)
-                if 0 < index <= len(choices):
-                    choice = choices[index - 1]
-            except ValueError:
-                pass
-            lower_choices = [x.lower() for x in choices]
-            lower_choice = choice.lower()
-            if lower_choice in lower_choices:
-                choice = choices[lower_choices.index(lower_choice)]
-                break
-            if lower_choice in ('q', 'quit'):
-                self.quit()
-                return None
-            self._print('Invalid selection', Color.RED)
-        return choice
+    #     Args:
+    #         prompt: String with a prompt/title for the menu.
+    #         choices: List of items the user can choose from.
 
-    def feed(self, *args: List[str]):
+    #     Returns:
+    #         String with the choice the user selected. If the user chose to
+    #         quit instead, None is returned instead.
+
+    #     """
+    #     choice = None
+    #     while True:
+    #         self._print(prompt, Color.YELLOW)
+    #         for i, choice_name in enumerate(choices):
+    #             self._print(i+1, Color.CYAN, end='')
+    #             self._print(f'. {choice_name}')
+    #         choice = input('> ')
+    #         try:
+    #             index = int(choice)
+    #             if 0 < index <= len(choices):
+    #                 choice = choices[index - 1]
+    #         except ValueError:
+    #             pass
+    #         lower_choices = [x.lower() for x in choices]
+    #         lower_choice = choice.lower()
+    #         if lower_choice in lower_choices:
+    #             choice = choices[lower_choices.index(lower_choice)]
+    #             break
+    #         if lower_choice in ('q', 'quit'):
+    #             self.quit()
+    #             return None
+    #         self._print('Invalid selection', Color.RED)
+    #     return choice
+
+    def feed(self, _):
         """Feed the fish."""
-        del args  # Unused
         self.tank.feed()
 
-    def status(self, *args: List[str]):
+    def status(self, _):
         """Print the tank and get the status of the tank and fish."""
-        del args  # Unused
         self.tank.print()
 
-    def debug(self, *args: List[str]):
+    def debug(self, _):
         """Enter pdb."""
-        del args  # Unused
         breakpoint()
 
-    def add_fish(self, *args: List[str]):
+    def add_fish(self, _):
         """Add a fish to the tank
 
         The user is given a list of species and then asked to name it. Duplicate
         names are not allowed. A random personality is selected and a fish is
         created using these parameters and added to the tank.
         """
-        del args  # Unused
         if self.tank.is_full():
             self._print('Sorry, the tank is full', Color.RED)
             return
@@ -205,14 +220,13 @@ class Interface:
         self.tank.add_fish(new_fish)
         self.tank.print()
 
-    def remove_fish(self, *args: List[str]):
+    def remove_fish(self, _):
         """Remove a fish from the tank
 
         The user is given a list of fish to choose one to remove or to cancel.
         After selecting one, the user is prompted to make sure they want to. If
         so the fish is removed.
         """
-        del args  # Unused
         fish_names = [fish.name for fish in self.tank.fish]
         fish_name = self.menu('Select a fish to remove:', [*fish_names, 'Cancel'])
         if not fish_name:  # User quit

@@ -15,8 +15,8 @@ class FishBuilder:
         self.personalities = get_personalities(personality_file)
         self.species = get_species(species_file)
 
-    def get_fish(self, name: str, species_name: str, personality_name: str) -> Fish:
-        """Creates a fish.
+    def make_fish(self, name: str, species_name: str, personality_name: str) -> Fish:
+        """Creates a new fish.
 
         Args:
             name: Name for the fish.
