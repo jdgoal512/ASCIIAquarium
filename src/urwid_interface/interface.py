@@ -1,213 +1,199 @@
-from typing import List
+from typing import List, Callable
 import random
 
 import urwid
 
-from src.cmd_interface.color import Color
-from src.cmd_interface.command import Command
 from src.tank import Tank
+from src.urwid_interface.text_prompt import TextPrompt
+from src.urwid_interface.tank_widget import TankWidget
+from src.urwid_interface.popup import Popup
 
-
-def exit_on_q(key):
-    if key in ('q', 'Q'):
-        raise urwid.ExitMainLoop()
-
-class QuestionBox(urwid.Filler):
-    def keypress(self, size, key):
-        if key != 'enter':
-            return super(QuestionBox, self).keypress(size, key)
-        self.original_widget = urwid.Text(u'Nice to meet you,\n%s.\n\nPress Q to exit.' % edit.edit_text)
 
 class Interface:
     """Command line interface for interacting with the tank and fish.
 
     Attributes:
-        tank: The tank
-        color: Whether or not to enable printing in color
-        commands: List of commands the interface has
+        tank: The tank.
+        color: Whether or not to enable printing in color.
+        commands: List of commands the interface has.
     """
     def __init__(self, tank: Tank, filename: str = 'save.json', color: bool = True):
         self.tank = tank
         self.filename = filename
         self.color = color
         self.bottom_widget = None
+        self.tank_widget = None
+        self.loop = None
 
-        self.commands = [
-            Command(name='Feed',
-                    action=self.feed,
-                    help_text='Show this message',
-                    shortcuts=['f', 'feed']),
-            Command(name='Add a fish',
-                    action=self.add_fish,
-                    help_text='Add a fish to the tank',
-                    shortcuts=['a', 'add_fish']),
-            Command(name='Remove a fish',
-                    action=self.remove_fish,
-                    help_text='Remove a fish from the tank',
-                    shortcuts=['r', 'remove_fish']),
-            # Command(name='Help',
-            #         action=self.help,
-            #         help_text='Show this message',
-            #         shortcuts=['h', 'help']),
-            Command(name='Quit',
-                    action=self.quit,
-                    help_text='Quit',
-                    shortcuts=['q', 'quit', 'e', 'exit']),
+        menu_items = [
+            ('Status', self.status_button_action),
+            ('Feed', self.feed_button_action),
+            ('Add a fish', self.add_fish_button_action),
+            ('Remove a fish', self.remove_fish_button_action),
+            ('Help', self.help_button_action),
+            ('Quit', self.quit),
         ]
         body = []
-        for command in self.commands:
-            button = urwid.Button(command.name)
-            urwid.connect_signal(button, 'click', command.action)
+        for label, action in menu_items:
+            button = urwid.Button(label)
+            urwid.connect_signal(button, 'click', action)
             body.append(urwid.AttrMap(button, None, focus_map='reversed'))
         self.main_menu_widget = urwid.ListBox(urwid.SimpleFocusListWalker(body))
 
-
-    def _print(self, text, color=None, end='\n'):
-        """Prints the given text in the given color.
-
-        Args:
-            text: Text to print.
-            color: Color for the text. If None, then it is not colored.
-            end: End of the line. Set to "" to continue printing on the same
-                 line.
-        """
-        if self.color and color:
-            print(f'{color.value}{text}{Color.RESET.value}', end=end)
-        else:
-            print(text, end=end)
-
-    def help(self, _):
-        """Prints the help message."""
-        self._print('Commands:', Color.YELLOW)
-        for command in self.commands:
-            if not command.hidden:
-                if command.shortcuts:
-                    for shortcut in command.shortcuts:
-                        self._print(shortcut, Color.CYAN, end='')
-                        if shortcut != command.shortcuts[-1]:
-                            self._print('/', end='')
-                else:
-                    self._print(command.name, Color.CYAN, end='')
-                self._print(f': {command.help_text}')
-
     def quit(self, _):
         """Exit the command line interface."""
-        # self._print('Exiting')
         self.tank.save(self.filename)
+        self.tank_widget.stop_animation()
         raise urwid.ExitMainLoop()
-
-    def _process_cmd(self, cmd: str):
-        """Process a line of text.
-
-        The first word is the command. The rest of the words are passed as a
-        list to the the command function. If an invalid command is entered it
-        displays an error message.
-        """
-        for command in self.commands:
-            if command.shortcuts:
-                if cmd in command.shortcuts:
-                    command.action()
-                    return
-            elif cmd == command.name:
-                command.action()
-                return
-        self._print('Invalid command, type "help" for help', Color.RED)
 
     def run(self):
         """Enter the urwid line interface."""
         self.bottom_widget = urwid.BoxAdapter(self.main_menu_widget, height=10)
+        self.tank_widget = TankWidget(self.tank)
         main_widget = urwid.Filler(urwid.Pile([urwid.Text('ASCII Aquarium'),
-                                        urwid.Divider(),
-                                        self.bottom_widget]))
-        loop = urwid.MainLoop(main_widget)
-        loop.run()
+                                               self.tank_widget,
+                                               urwid.Divider(),
+                                               self.bottom_widget]))
+        self.loop = urwid.MainLoop(main_widget)
+        self.tank_widget.start_animation(self.loop, 0.2)
+        self.loop.run()
 
-    def main_menu(self):
-        body = []
-        for command in self.commands:
-            button = urwid.Button(command.name)
-            urwid.connect_signal(button, 'click', command.action)
-            body.append(urwid.AttrMap(button, None, focus_map='reversed'))
-        return urwid.ListBox(urwid.SimpleFocusListWalker(body))
+    def menu(self, title: str, choices: List[str], callback: Callable,
+             cancel_button: bool = True):
+        """Create a menu.
 
-    def menu(self, title: str, choices: List[str], callback, cancel_button=True):
+        Creates a menu with the given title and list of choices and an optional
+        "Cancel" button which goes back to the main menu. Selecting another
+        item passes the name of that item to the callback function.
+
+        Args:
+            title: Title for the menu.
+            choices: List of choices the user can pick from.
+            callback: Function to call with the string the user picked.
+            cancel_button: Whether or not to add a cancel button.
+        """
         body = [urwid.Text(title), urwid.Divider()]
-        for c in choices:
-            button = urwid.Button(c)
-            urwid.connect_signal(button, 'click', callback, c)
+        for choice in choices:
+            button = urwid.Button(choice)
+            urwid.connect_signal(button, 'click', callback, choice)
             body.append(urwid.AttrMap(button, None, focus_map='reversed'))
         if cancel_button:
             button = urwid.Button('Cancel')
             urwid.connect_signal(button, 'click', self.main_menu)
             body.append(urwid.AttrMap(button, None, focus_map='reversed'))
-
         list_box = urwid.ListBox(urwid.SimpleFocusListWalker(body))
         self.bottom_widget.original_widget = list_box
 
-    def feed(self, _):
+    def status_button_action(self, _):
+        """Get the status of all fish."""
+        status = '\n'.join([fish.get_status() for fish in self.tank.fish])
+        popup = Popup(message=('yellow', status), callback=self.main_menu)
+        self.bottom_widget.original_widget = popup
+
+    def feed_button_action(self, _):
         """Feed the fish."""
         self.tank.feed()
+        popup = Popup(message='The fish have been feed', callback=self.main_menu)
+        self.bottom_widget.original_widget = popup
 
     def main_menu(self, *args):
+        """Go back to the main menu."""
         del args  # Unused
         self.bottom_widget.original_widget = self.main_menu_widget
 
-    def add_fish(self, _):
-        """Add a fish to the tank
+    def add_fish_button_action(self, _):
+        """Add a fish to the tank.
 
         The user is given a list of species and then asked to name it. Duplicate
         names are not allowed. A random personality is selected and a fish is
         created using these parameters and added to the tank.
         """
         if self.tank.is_full():
-            self._print('Sorry, the tank is full', Color.RED)
-            return
-        self.menu('Choose a species for your fish:',
-                  list(self.tank.fish_builder.species.keys()),
-                  self.name_fish)
+            popup = Popup('Sorry, the tank is full', self.main_menu)
+            self.bottom_widget.original_widget = popup
+        else:
+            self.menu('Choose a species for your fish:',
+                      list(self.tank.fish_builder.species.keys()),
+                      self.get_fish_name)
 
-    def name_fish(self, _, species):
+    def get_fish_name(self, _, species: str):
+        """Gets a name for the fish.
+
+        Opens a text prompt for the user to name their fish. Also picks a
+        random personality for the fish and then passes it to a callback to
+        add the fish to the tank.
+
+        Args:
+            species: Name of the species to make the fish.
+        """
         personalities = list(self.tank.fish_builder.personalities.keys())
         personality = random.choice(personalities)
+        def add_fish(name):
+            """Add the fish to the tank and go back to the main menu.
 
-        # edit = urwid.Pile([urwid.Edit(f'What do you want to name your {species}?\n', edit_text='hello', wrap='clip')])
-        # edit = urwid.BoxAdapter(urwid.Pile([urwid.Edit(f'What do you want to name your {species}?\n', edit_text='hello', wrap='clip')]), height=10)
-        #edit = urwid.BoxAdapter(urwid.Edit(f'What do you want to name your {species}?\n', edit_text='hello', wrap='clip'), height=10)
-        edit = urwid.Edit(f'What do you want to name your {species}?\n')
-        fill = QuestionBox(edit)
+            Adds the fish if there is not already another one with the
+            same name (not case sensitive).
 
-        # self.bottom_widget.original_widget = EditText(f'What do you want to name your {species}?\n',
-        #                                               self.main_menu, self.main_menu)
-        self.bottom_widget.original_widget = fill
-        # self.bottom_widget.original_widget = urwid.Edit(f'What do you want to name your {species}?\n')
-        # import time; time.sleep(20)
-        # while name_taken:
-        #     name_taken = False
-        #     name = input('What do you want to name your fish? ')
-        #     for fish in self.tank.fish:
-        #         if fish.name.lower() == name.lower():
-        #             self._print('Sorry, that name is already taken', Color.RED)
-        #             name_taken = True
-        #             break
-        # new_fish = self.tank.fish_builder.make_fish(name=name,
-        #                                             species_name=species,
-        #                                             personality_name=personality)
-        # self.main_menu()
+            Args:
+                name: The name of the fish.
+            """
+            # Check if the name is already taken
+            if name.lower() in [fish.name.lower() for fish in self.tank.fish]:
+                current_widget = self.bottom_widget.original_widget
+                def back_to_name(*args):
+                    """Go back to the fish naming screen"""
+                    del args  # Unused
+                    self.bottom_widget.original_widget = current_widget
+                popup = Popup('Sorry, that name is already taken', back_to_name)
+                self.bottom_widget.original_widget = popup
+                return
 
-    def remove_fish(self, _):
-        """Remove a fish from the tank
+            new_fish = self.tank.fish_builder.make_fish(name=name,
+                                                        species_name=species,
+                                                        personality_name=personality)
+            self.tank.add_fish(new_fish)
+            self.main_menu()
+        name_prompt = TextPrompt(f'What do you want to name your {species}?\n', add_fish)
+        self.bottom_widget.original_widget = name_prompt
+
+    def remove_fish_button_action(self, _):
+        """Remove a fish from the tank.
 
         The user is given a list of fish to choose one to remove or to cancel.
         After selecting one, the user is prompted to make sure they want to. If
         so the fish is removed.
         """
-        fish_names = [fish.name for fish in self.tank.fish]
-        fish_name = self.menu('Select a fish to remove:', fish_names,
-                              self.double_check_remove_fish)
+        if self.tank.fish:
+            fish_names = [fish.name for fish in self.tank.fish]
+            self.menu('Select a fish to remove:', fish_names,
+                      self.verify_remove_fish)
+        else:
+            popup = Popup('There are no fish to remove', self.main_menu)
+            self.bottom_widget.original_widget = popup
 
-    def double_check_remove_fish(self, _, fish_name):
-        def callback(_, response):
+    def verify_remove_fish(self, _, fish_name):
+        """Double checks if you really want to remove a fish then removes it.
+
+        Args:
+            fish_name: The name of the fish to remove
+        """
+        def remove_fish(_, response):
+            """Remove the fish.
+
+            Removes the fish if the user said so, then goes back to the main menu.
+
+            Args:
+                response: "Yes" or "No" whether or not to remove the fish.
+            """
             if response == 'Yes':
-                self.tank.remove_fish(fish_name)
-            self.main_menu()
-        self.menu('Are you sure?', ['Yes', 'No'], callback, cancel_button=False)
+                message = self.tank.remove_fish(fish_name)
+            popup = Popup(message=message, callback=self.main_menu)
+            self.bottom_widget.original_widget = popup
+        self.menu('Are you sure?', ['Yes', 'No'], remove_fish, cancel_button=False)
+
+    def help_button_action(self, _):
+        """Prints the help message."""
+        help_message = 'Feed your fish every day to make them happy.'
+        help_message += ' It will take a while for them to grow up.'
+        popup = Popup(help_message, self.main_menu)
+        self.bottom_widget.original_widget = popup

@@ -72,8 +72,6 @@ class Fish:
         hunger = (time.time() - self.last_fed)/self.species.hunger_time
         if hunger > 0.2:
             self.last_fed = time.time()
-        else:
-            print(f'{self.name} is not hungry yet')
 
     def get_stress_text(self) -> str:
         """Gets a string with how stressed the fish is
