@@ -15,6 +15,7 @@ class Fish:
         birth: Timestamp with when it was first created.
         stress: Float from 0-1 of how stressed the fish is, 0 being no stress.
         last_checkin: Timestamp of when the stress was last updated.
+        time_fed: Time in seconds of how long the fish has been fed.
     """
     def __init__(self,
                  name: str,
@@ -23,11 +24,13 @@ class Fish:
                  last_fed: float = None,
                  birth: float = None,
                  stress: float = 0.25,
-                 last_checkin: float = None):
+                 last_checkin: float = None,
+                 time_fed: float = 0):
         self.name = name
         self.species = species
         self.personality = personality
         self.stress = stress
+        self.time_fed = time_fed
         if birth:
             self.birth = birth
         else:
@@ -62,7 +65,7 @@ class Fish:
         Returns:
             String with ascii art for the fish
         """
-        return self.species.get_art(time.time() - self.birth)
+        return self.species.get_art(self.time_fed)
 
     def feed(self):
         """Feed the fish.
@@ -72,25 +75,6 @@ class Fish:
         hunger = (time.time() - self.last_fed)/self.species.hunger_time
         if hunger > 0.2:
             self.last_fed = time.time()
-
-    def get_stress_text(self) -> str:
-        """Gets a string with how stressed the fish is
-
-        Returns:
-            String with short message based on the fish's
-            stress level
-        """
-        if self.stress < 0.05:
-            return 'Very happy'
-        if self.stress < 0.1:
-            return 'Happy'
-        if self.stress < 0.2:
-            return 'Feels ok'
-        if self.stress < 0.3:
-            return 'A little stressed'
-        if self.stress < 0.5:
-            return 'Stressed'
-        return 'Dangerously stressed'
 
     def get_current_stress(self, timestamp: float = None) -> float:
         """Gets the fish's current stress level
@@ -114,7 +98,7 @@ class Fish:
         return stress
 
     def checkin(self, timestamp: float = None):
-        """Reavaluate the fish's stress
+        """Reavaluate the fish's stress and increment the time it has been fed.
 
         Updates the fish's stress and the timestamp for when the last check in
         occurred. Stress is adjusted based on how long it has been since the
@@ -135,6 +119,9 @@ class Fish:
         new_weight = 0.5*time_delta/DAY
         new_stress = self.get_current_stress(self.last_checkin + time_delta)
         self.stress = (1 - new_weight)*self.stress + new_weight*new_stress
+        starve_time = self.last_fed + self.species.hunger_time
+        new_time_fed = min(time_delta, starve_time - self.last_checkin)
+        self.time_fed += new_time_fed
         self.last_checkin = timestamp
 
     def get_hunger(self, timestamp: float = None) -> float:
@@ -155,21 +142,6 @@ class Fish:
         hunger = (timestamp - self.last_fed)/self.species.hunger_time
         return hunger
 
-    def get_hunger_text(self, timestamp: float = None) -> str:
-        """Get short message of how hungry the fish is"""
-        hunger = self.get_hunger(timestamp)
-        if hunger > 1:
-            return 'Starved to death'
-        if hunger >= 0.5:
-            return 'Starving'
-        if hunger > 0.4:
-            return 'Very Hungry'
-        if hunger > 0.3:
-            return 'Hungry'
-        if hunger > 0.2:
-            return 'A little hungry'
-        return 'Full'
-
     def to_json(self) -> dict:
         """Gets dict for serializing to json
 
@@ -182,6 +154,7 @@ class Fish:
             "personality": self.personality.name,
             "birth": self.birth,
             "last_fed": self.last_fed,
+            "time_fed": self.time_fed,
             "stress": self.stress,
             "last_checkin": self.last_checkin,
         }

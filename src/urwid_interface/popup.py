@@ -2,6 +2,7 @@ from typing import Callable
 
 import urwid
 
+
 class Popup(urwid.Filler):
     """Display a popup message with an "OK" button.
 

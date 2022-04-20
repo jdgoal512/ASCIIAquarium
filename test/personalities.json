@@ -1,0 +1,16 @@
+{
+    "DEV_PERSONALITY": {
+        "happy_quotes": [
+            "happy"
+        ],
+        "normal_quotes": [
+            "normal"
+        ],
+        "unhappy_quotes": [
+            "unhappy"
+        ],
+        "hungry_quotes": [
+            "hungry"
+        ]
+    }
+}

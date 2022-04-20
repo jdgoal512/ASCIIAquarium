@@ -5,12 +5,15 @@ The Tank class also holds all relevant data and functions for
 the main save file.
 """
 import json
-import random
-from typing import List
+import time
 
-from src.fish_art import FishArt
 from src.fish.fish import Fish
 from src.fish.fish_builder import FishBuilder
+
+
+DEFAULT_WIDTH = 10
+DEFAULT_HEIGHT = 10
+DEFAULT_MAX_FISH = 10
 
 
 class Tank:
@@ -20,16 +23,27 @@ class Tank:
         width: Width of the interior of the tank in characters.
         height: Height of the interior of the tank in characters.
         max_fish: The maximum number of fish you can put in the tank
+        waste: Amount of waste in the tank.
         fish: List of fish in the tank.
         fish_builder: Creates fish that are read in from json.
+        last_checkin: Timestamp of when the stress was last updated.
     """
-    def __init__(self, width: int = 30, height: int = 10, max_fish: int = 10):
+    def __init__(self,
+                 width: int = DEFAULT_WIDTH,
+                 height: int = DEFAULT_HEIGHT,
+                 max_fish: int = DEFAULT_MAX_FISH,
+                 waste: float = 0,
+                 last_checkin: float = None):
         self.width = width
         self.height = height
         self.max_fish = max_fish
+        self.waste = waste
         self.fish = []
-        self.art = []
         self.fish_builder = FishBuilder()
+        if last_checkin:
+            self.last_checkin = last_checkin
+        else:
+            self.last_checkin = time.time()
 
     def add_fish(self, fish: Fish):
         """Adds a fish to the tank as long as there is still room in the tank.
@@ -39,83 +53,60 @@ class Tank:
         """
         if not self.is_full():
             self.fish += [fish]
-            x = random.randint(1, self.width - len(fish.get_art()))
-            y = random.randint(1, self.height)
-            self.art += [FishArt(fish, x, y)]
 
     def remove_fish(self, fish_name: str):
         """Remove fish with given name from the tank."""
-        for fish_art in self.art:
-            if fish_art.fish.name == fish_name:
-                self.art.remove(fish_art)
-                break
         for fish in self.fish:
             if fish.name == fish_name:
                 self.fish.remove(fish)
                 return f'Goodbye {fish_name}'
         return 'Error, could not remove {fish_name}'
 
-
     def feed(self):
         """Feed all fish in the tank."""
+        self.checkin()
         for f in self.fish:
             f.feed()
 
-    def move_fish(self, refresh_rate: float = 1):
-        """Randomly move the fish.
+    def clean(self):
+        """Clean the tank if there is a significant amount of waste."""
+        if self.waste > 0.15:
+            self.waste = 0
+            self.checkin()
+            return "The tank is squeaky clean now"
+        self.checkin()
+        return "The tank is still pretty clean"
+
+    def checkin(self, timestamp: float = None):
+        """Update the amount of waste and checkin on the waste.
+
+        Updates the amount of waste based on the number of fish and the
+        timestamp for when the last check in occurred. It will recursively
+        checkin for each day that has passed since the last checkin.
 
         Args:
-            refresh_rate: How many times this is called per second.
+            timestamp: If given, perform the check in as if it were that time.
+                       Otherwise check in using the current time.
         """
-        for fish in self.art:
-            random_movement = random.random()
-            if random_movement < 0.2*refresh_rate:  # Flip the fish
-                fish.flip()
-            elif random_movement < 0.3*refresh_rate: # Move up
-                if fish.y > 1:
-                    fish.update_position(fish.x, fish.y - 1)
-                else:  # Bounce off top of tank
-                    fish.update_position(fish.x, fish.y + 1)
-            elif random_movement < 0.4*refresh_rate: # Move down
-                if fish.y <= self.height:
-                    fish.update_position(fish.x, fish.y + 1)
-                else:  # Bounce off bottom of tank
-                    fish.update_position(fish.x, fish.y - 1)
-            elif random_movement < 0.8*refresh_rate: # Move forward
-                if fish.flipped:
-                    if fish.x <= self.width - len(fish.get_art()):  # Move right
-                        fish.update_position(fish.x + 1, fish.y)
-                    else:  # Bounce off side of tank
-                        fish.flip()
-                else:
-                    if fish.x > 1:  # Move left
-                        fish.update_position(fish.x - 1, fish.y)
-                    else:  # Bounce off side of tank
-                        fish.flip()
+        if not timestamp:
+            timestamp = time.time()
+        DAY = 60*60*24
+        # Recursively checkin for each day that has passed
+        if self.last_checkin + DAY < timestamp:
+            self.checkin(timestamp - DAY)
+        for fish in self.fish:
+            fish.checkin(timestamp)
+        time_delta = timestamp - self.last_checkin
+        new_waste = 0.05*time_delta*len(self.fish)/DAY
+        self.waste += new_waste
+        self.last_checkin = timestamp
 
 
-    def draw_tank(self, interval: float = 1) -> List[str]:
-        """Create ascii art of the tank with all the fish inside.
-
-        Args:
-            interval: How many times this is called per second.
-
-        Returns:
-            A list of strings with the ascii art for the tank.
-        """
-        tank_text = ["+" + '=' * self.width + '+']
-        tank_text += ["|" + '~' * self.width + '|']
-        for _ in range(self.height):
-            tank_text += ["|" + ' ' * self.width + '|']
-        tank_text += ["+" + '#' * self.width + '+']
-        self.move_fish(interval)
-
-        for fish in self.art:
-            fish_art = fish.get_art()
-            tank_text[fish.y] = tank_text[fish.y][:fish.x] + fish_art \
-                                + tank_text[fish.y][fish.x + len(fish_art):]
-
-        return tank_text
+    def get_status(self):
+        """Get how clean the tank is and how the fish are doing."""
+        self.checkin()
+        fish_status = [fish.get_status() for fish in self.fish]
+        return fish_status
 
     def is_full(self):
         """Returns whether or not the tank is full."""
@@ -125,7 +116,8 @@ class Tank:
         """Returns a dict of the tank that can be serialized with json."""
         tank_json = {
             "width": self.width,
-            "height": self.height
+            "height": self.height,
+            "waste": self.waste
         }
         tank_json["fish"] = [f.to_json() for f in self.fish]
         return tank_json
@@ -136,8 +128,9 @@ class Tank:
         Args:
             tank_json: dict with the serialized json of a tank
         """
-        self.width = tank_json["width"]
-        self.height = tank_json["height"]
+        self.width = tank_json.get("width", DEFAULT_WIDTH)
+        self.height = tank_json.get("height", DEFAULT_HEIGHT)
+        self.waste = tank_json.get("waste", 0)
         self.fish = []
         for json_fish in tank_json["fish"]:
             self.add_fish(self.fish_builder.from_json(json_fish))
@@ -150,6 +143,7 @@ class Tank:
         Args:
             filename: The file to save the tank to.
         """
+        self.checkin()
         json_text = json.dumps(self.to_json(), indent=4)
         with open(filename, 'w') as save_file:
             save_file.write(json_text)

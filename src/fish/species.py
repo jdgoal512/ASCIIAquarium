@@ -1,6 +1,7 @@
 import json
 from typing import List
 
+
 class Species:
     """Species of fish.
 
@@ -14,7 +15,11 @@ class Species:
         art_ages: List of time in seconds for the fish of the given age to
                   progress to the next ascii art.
     """
-    def __init__(self, name: str, hunger_time: float, art: List[str], art_ages: List[float]):
+    def __init__(self,
+                 name: str,
+                 hunger_time: float,
+                 art: List[str],
+                 art_ages: List[float]):
         self.name = name
         self.hunger_time = hunger_time
         self.art = art
@@ -32,6 +37,7 @@ class Species:
     def to_json(self) -> str:
         """Returns the name of the species."""
         return self.name
+
 
 def get_species(filename='data/species.json') -> List[Species]:
     """Read in species from a json file
@@ -52,11 +58,13 @@ def get_species(filename='data/species.json') -> List[Species]:
                                     art_ages=s_data['art_ages'])
         return all_s
 
+
 def main():
     """Print the name of all species read from the file"""
     all_s = get_species('../../data/species.json')
     for species_name in all_s:
         print(species_name)
+
 
 if __name__ == '__main__':
     main()

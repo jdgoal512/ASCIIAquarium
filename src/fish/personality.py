@@ -2,6 +2,7 @@ import json
 import random
 from typing import List
 
+
 class Personality:
     """Personality of a fish.
 
@@ -9,11 +10,11 @@ class Personality:
     stressed, and is hungry.
 
     Attributes:
-        name: Name of the personality
-        happy_quotes: List of quotes for when it has very low stress
-        normal_quotes: List of quotes for when it as moderately low stress
-        unhappy_quotes: List of quotes for when it has high stress
-        hungry_quotes: List of quotes for when it is hungry
+        name: Name of the personality.
+        happy_quotes: List of quotes for when it has very low stress.
+        normal_quotes: List of quotes for when it as moderately low stress.
+        unhappy_quotes: List of quotes for when it has high stress.
+        hungry_quotes: List of quotes for when it is hungry.
     """
     def __init__(self, name: str, happy_quotes, normal_quotes, unhappy_quotes, hungry_quotes):
         self.name = name
@@ -48,14 +49,15 @@ class Personality:
         """Returns the name of the personality"""
         return self.name
 
+
 def get_personalities(filename='data/personalities.json') -> List[Personality]:
-    """Reads in a list of personalites from a file
+    """Reads in a list of personalities from a file
 
     Args:
-        filename: Filename to read the personalities from
+        filename: Filename to read the personalities from.
 
     Returns:
-        List of personalites read in from the json file
+        List of personalities read in from the json file.
     """
     with open(filename) as json_file:
         json_personalities = json.load(json_file)
@@ -67,6 +69,7 @@ def get_personalities(filename='data/personalities.json') -> List[Personality]:
                                         unhappy_quotes=p_data['unhappy_quotes'],
                                         hungry_quotes=p_data['hungry_quotes'])
         return all_p
+
 
 def main():
     """Prints all the personalities read in from the file"""

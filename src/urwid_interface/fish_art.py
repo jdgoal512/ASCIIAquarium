@@ -14,7 +14,7 @@ def _double_replace(text: str, char1: str, char2: str) -> str:
     Returns:
         A string with the substrings swapped
     """
-    TEMP = '!@#$%^&temp!@#$%&' # Giberish that would never actually show up
+    TEMP = '!@#$%^&temp!@#$%&'  # Giberish that would never actually show up
     text = text.replace(char1, TEMP)
     text = text.replace(char2, char1)
     text = text.replace(TEMP, char2)

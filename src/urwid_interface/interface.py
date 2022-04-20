@@ -1,5 +1,5 @@
-from typing import List, Callable
 import random
+from typing import List, Callable
 
 import urwid
 
@@ -15,19 +15,24 @@ class Interface:
     Attributes:
         tank: The tank.
         color: Whether or not to enable printing in color.
-        commands: List of commands the interface has.
     """
-    def __init__(self, tank: Tank, filename: str = 'save.json', color: bool = True):
+    def __init__(self, tank: Tank,
+                 filename: str = 'save.json',
+                 color: bool = True):
         self.tank = tank
         self.filename = filename
         self.color = color
         self.bottom_widget = None
-        self.tank_widget = None
+        self.tank_widget = TankWidget(height=self.tank.height,
+                                      width=self.tank.width)
+        for fish in self.tank.fish:
+            self.tank_widget.add_fish(fish)
         self.loop = None
 
         menu_items = [
             ('Status', self.status_button_action),
             ('Feed', self.feed_button_action),
+            ('Clean Tank', self.clean_button_action),
             ('Add a fish', self.add_fish_button_action),
             ('Remove a fish', self.remove_fish_button_action),
             ('Help', self.help_button_action),
@@ -49,7 +54,6 @@ class Interface:
     def run(self):
         """Enter the urwid line interface."""
         self.bottom_widget = urwid.BoxAdapter(self.main_menu_widget, height=10)
-        self.tank_widget = TankWidget(self.tank)
         main_widget = urwid.Filler(urwid.Pile([urwid.Text('ASCII Aquarium'),
                                                self.tank_widget,
                                                urwid.Divider(),
@@ -86,7 +90,8 @@ class Interface:
 
     def status_button_action(self, _):
         """Get the status of all fish."""
-        status = '\n'.join([fish.get_status() for fish in self.tank.fish])
+        status = '\n'.join(self.tank.get_status())
+        # status = '\n'.join([fish.get_status() for fish in self.tank.fish])
         popup = Popup(message=('yellow', status), callback=self.main_menu)
         self.bottom_widget.original_widget = popup
 
@@ -94,6 +99,12 @@ class Interface:
         """Feed the fish."""
         self.tank.feed()
         popup = Popup(message='The fish have been feed', callback=self.main_menu)
+        self.bottom_widget.original_widget = popup
+
+    def clean_button_action(self, _):
+        """Feed the fish."""
+        response = self.tank.clean()
+        popup = Popup(message=response, callback=self.main_menu)
         self.bottom_widget.original_widget = popup
 
     def main_menu(self, *args):
@@ -128,6 +139,7 @@ class Interface:
         """
         personalities = list(self.tank.fish_builder.personalities.keys())
         personality = random.choice(personalities)
+
         def add_fish(name):
             """Add the fish to the tank and go back to the main menu.
 
@@ -140,6 +152,7 @@ class Interface:
             # Check if the name is already taken
             if name.lower() in [fish.name.lower() for fish in self.tank.fish]:
                 current_widget = self.bottom_widget.original_widget
+
                 def back_to_name(*args):
                     """Go back to the fish naming screen"""
                     del args  # Unused
@@ -152,6 +165,7 @@ class Interface:
                                                         species_name=species,
                                                         personality_name=personality)
             self.tank.add_fish(new_fish)
+            self.tank_widget.add_fish(new_fish)
             self.main_menu()
         name_prompt = TextPrompt(f'What do you want to name your {species}?\n', add_fish)
         self.bottom_widget.original_widget = name_prompt
@@ -187,8 +201,11 @@ class Interface:
             """
             if response == 'Yes':
                 message = self.tank.remove_fish(fish_name)
-            popup = Popup(message=message, callback=self.main_menu)
-            self.bottom_widget.original_widget = popup
+                self.tank_widget.remove_fish(fish_name)
+                popup = Popup(message=message, callback=self.main_menu)
+                self.bottom_widget.original_widget = popup
+            else:
+                self.main_menu()
         self.menu('Are you sure?', ['Yes', 'No'], remove_fish, cancel_button=False)
 
     def help_button_action(self, _):

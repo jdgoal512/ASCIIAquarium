@@ -10,17 +10,15 @@ python3 fish.py
 # Features
 - Animated ascii aquarium with 10 different species of fish
 - Fish have unique messages based on their personalities and happiness
-- Fish grow over time
+- Fish grow over time (as long as you keep feeding them)
 
 # TODOs
-- Tank cleaning
-- Growth dependant on feeding
-- Animate feeding
 - Colors
+- Aquatic plants/tank decorations
+- Animate feeding
 - More species of fish
 - More personalities and quotes
-- Aquatic plants/tank decorations
-- Test cases
+- More test cases
 
 # Credits
 Inspired by [botany](https://github.com/jifunks/botany).

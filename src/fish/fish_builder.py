@@ -1,3 +1,5 @@
+import time
+
 from src.fish.fish import Fish
 from src.fish.personality import get_personalities
 from src.fish.species import get_species
@@ -56,7 +58,8 @@ class FishBuilder:
         return Fish(name=fish_json["name"],
                     species=species,
                     personality=personality,
-                    birth=fish_json["birth"],
-                    last_fed=fish_json["last_fed"],
-                    stress=fish_json["stress"],
-                    last_checkin=fish_json["last_checkin"])
+                    birth=fish_json.get("birth", time.time()),
+                    last_fed=fish_json.get("last_fed", 0),
+                    stress=fish_json.get("stress", 0.5),
+                    last_checkin=fish_json.get("last_checkin", 0),
+                    time_fed=fish_json.get("time_fed", 0))
