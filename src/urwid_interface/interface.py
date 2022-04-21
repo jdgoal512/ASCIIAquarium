@@ -59,7 +59,7 @@ class Interface:
                                                urwid.Divider(),
                                                self.bottom_widget]))
         self.loop = urwid.MainLoop(main_widget)
-        self.tank_widget.start_animation(self.loop, 0.2)
+        self.tank_widget.start_animation(self.loop)
         self.loop.run()
 
     def menu(self, title: str, choices: List[str], callback: Callable,

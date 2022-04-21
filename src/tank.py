@@ -11,7 +11,8 @@ from src.fish.fish import Fish
 from src.fish.fish_builder import FishBuilder
 
 
-DEFAULT_WIDTH = 10
+DAY = 60*60*24
+DEFAULT_WIDTH = 30
 DEFAULT_HEIGHT = 10
 DEFAULT_MAX_FISH = 10
 
@@ -40,7 +41,7 @@ class Tank:
         self.waste = waste
         self.fish = []
         self.fish_builder = FishBuilder()
-        if last_checkin:
+        if last_checkin is not None:
             self.last_checkin = last_checkin
         else:
             self.last_checkin = time.time()
@@ -60,7 +61,7 @@ class Tank:
             if fish.name == fish_name:
                 self.fish.remove(fish)
                 return f'Goodbye {fish_name}'
-        return 'Error, could not remove {fish_name}'
+        return f'Error, could not remove {fish_name}'
 
     def feed(self):
         """Feed all fish in the tank."""
@@ -88,9 +89,8 @@ class Tank:
             timestamp: If given, perform the check in as if it were that time.
                        Otherwise check in using the current time.
         """
-        if not timestamp:
+        if timestamp is None:
             timestamp = time.time()
-        DAY = 60*60*24
         # Recursively checkin for each day that has passed
         if self.last_checkin + DAY < timestamp:
             self.checkin(timestamp - DAY)

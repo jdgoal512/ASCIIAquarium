@@ -8,6 +8,20 @@ from src.fish.fish import Fish
 from src.urwid_interface.fish_art import FishArt
 
 
+BACKGROUND = r"""+==============================+
+|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+|                              |
+|                              |
+|                              |
+|   o\o                        |
+|   o/o                        |
+|   o\o              \  /      |
+|   o/o  o\o        \ \| \     |
+|   o\o  o/o         |/|//     |
+|   o/o  o\o          \|/      |
++##############################+"""
+
+
 class TankWidget(urwid.BoxAdapter):
     """Widget that has the shows the tank with the fish inside.
 
@@ -17,11 +31,16 @@ class TankWidget(urwid.BoxAdapter):
         tank_height: Height of the interior of the tank in characters.
         fish: FishArt for the fish in the tank.
         fish_lock: Mutex for safe handling of fish
+        refresh_rate: How often to refresh the tank (in seconds)
     """
-    def __init__(self, height: int, width: int, fish: List[FishArt] = None):
+    def __init__(self, height: int,
+                 width: int,
+                 fish: List[FishArt] = None,
+                 refresh_rate: float = 0.2):
         self.running = False
         self.tank_width = width
         self.tank_height = height
+        self.refresh_rate = refresh_rate
         if fish:
             self.fish = fish
         else:
@@ -32,54 +51,52 @@ class TankWidget(urwid.BoxAdapter):
         super(TankWidget, self).__init__(urwid.Filler(self.pile),
                                          height=(self.tank_height + 3))
 
-    def move_fish(self, refresh_rate: float = 1):
-        """Randomly move the fish.
-
-        Args:
-            refresh_rate: How many times this is called per second.
-        """
+    def move_fish(self):
+        """Randomly move the fish."""
         with self.fish_lock:
             for fish in self.fish:
                 random_movement = random.random()
-                if random_movement < 0.2*refresh_rate:  # Flip the fish
+                if random_movement < 0.2*self.refresh_rate:
+                    # Flip the fish
                     fish.flip()
-                elif random_movement < 0.3*refresh_rate:  # Move up
+                elif random_movement < 0.3*self.refresh_rate:
+                    # Move up
                     if fish.y > 1:
                         fish.update_position(fish.x, fish.y - 1)
-                    else:  # Bounce off top of tank
+                    else:
+                        # Bounce off top of tank
                         fish.update_position(fish.x, fish.y + 1)
-                elif random_movement < 0.4*refresh_rate:  # Move down
-                    if fish.y <= self.height:
+                elif random_movement < 0.4*self.refresh_rate:
+                    # Move down
+                    if fish.y < self.tank_height:
                         fish.update_position(fish.x, fish.y + 1)
-                    else:  # Bounce off bottom of tank
+                    else:
+                        # Bounce off bottom of tank
                         fish.update_position(fish.x, fish.y - 1)
-                elif random_movement < 0.8*refresh_rate:  # Move forward
+                elif random_movement < 0.8*self.refresh_rate:
+                    # Move forward
                     if fish.flipped:
-                        if fish.x <= self.tank_width - len(fish.get_art()):  # Move right
+                        if fish.x <= self.tank_width - len(fish.get_art()):
+                            # Move right
                             fish.update_position(fish.x + 1, fish.y)
-                        else:  # Bounce off side of tank
+                        else:
+                            # Bounce off side of tank
                             fish.flip()
                     else:
-                        if fish.x > 1:  # Move left
+                        if fish.x > 1:
+                            # Move left
                             fish.update_position(fish.x - 1, fish.y)
                         else:  # Bounce off side of tank
                             fish.flip()
 
-    def get_tank_rows(self, interval: float = 1) -> List[str]:
+    def get_tank_rows(self) -> List[str]:
         """Create ascii art of the tank with all the fish inside.
-
-        Args:
-            interval: How many times this is called per second.
 
         Returns:
             A list of strings with the ascii art for the tank.
         """
-        tank_text = ["+" + '=' * self.tank_width + '+']
-        tank_text += ["|" + '~' * self.tank_width + '|']
-        for _ in range(self.tank_height):
-            tank_text += ["|" + ' ' * self.tank_width + '|']
-        tank_text += ["+" + '#' * self.tank_width + '+']
-        self.move_fish(interval)
+        tank_text = BACKGROUND.split('\n')
+        self.move_fish()
         with self.fish_lock:
             for fish in self.fish:
                 fish_art = fish.get_art()
@@ -87,9 +104,9 @@ class TankWidget(urwid.BoxAdapter):
                     + tank_text[fish.y][fish.x + len(fish_art):]
         return tank_text
 
-    def draw(self, interval=1):
+    def draw(self):
         """Redraw the tank."""
-        tank_rows = self.get_tank_rows(interval)
+        tank_rows = self.get_tank_rows()
         for pile_row, tank_row in zip(self.pile.contents, tank_rows):
             pile_row[0].set_text(tank_row)
             pile_row[0]._invalidate()
@@ -113,7 +130,7 @@ class TankWidget(urwid.BoxAdapter):
                     self.fish.remove(fish)
                 return
 
-    def start_animation(self, loop: urwid.MainLoop, interval: float = 1):
+    def start_animation(self, loop: urwid.MainLoop):
         """Start the fish swimming.
 
         Args:
@@ -125,8 +142,8 @@ class TankWidget(urwid.BoxAdapter):
             def redraw(*args):
                 del args  # Unused
                 if self.running:
-                    self.draw(interval)
-                    loop.set_alarm_in(interval, redraw)
+                    self.draw()
+                    loop.set_alarm_in(self.refresh_rate, redraw)
             redraw()
 
     def stop_animation(self):

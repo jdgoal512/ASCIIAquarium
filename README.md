@@ -14,11 +14,10 @@ python3 fish.py
 
 # TODOs
 - Colors
-- Aquatic plants/tank decorations
 - Animate feeding
 - More species of fish
 - More personalities and quotes
-- More test cases
+- Pick tank style
 
 # Credits
 Inspired by [botany](https://github.com/jifunks/botany).

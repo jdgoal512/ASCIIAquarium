@@ -31,15 +31,15 @@ class Fish:
         self.personality = personality
         self.stress = stress
         self.time_fed = time_fed
-        if birth:
+        if birth is not None:
             self.birth = birth
         else:
             self.birth = time.time()
-        if last_fed:
+        if last_fed is not None:
             self.last_fed = last_fed
         else:
             self.last_fed = time.time() - self.species.hunger_time/3
-        if last_checkin:
+        if last_checkin is not None:
             self.last_checkin = last_checkin
         else:
             self.last_checkin = time.time()
@@ -72,8 +72,7 @@ class Fish:
 
         Updates the time since it was last fed if it hasn't eaten recently.
         """
-        hunger = (time.time() - self.last_fed)/self.species.hunger_time
-        if hunger > 0.2:
+        if self.get_hunger() > 0.2:
             self.last_fed = time.time()
 
     def get_current_stress(self, timestamp: float = None) -> float:
@@ -89,7 +88,7 @@ class Fish:
            Float between 0 and 1 with the fish's stress level, with 0 being
            no stress.
         """
-        if not timestamp:
+        if timestamp is None:
             timestamp = time.time()
 
         hunger = self.get_hunger(timestamp)
@@ -112,7 +111,7 @@ class Fish:
             timestamp: If given, perform the check in as if it were that time.
                        Otherwise check in using the current time.
         """
-        if not timestamp:
+        if timestamp is None:
             timestamp = time.time()
         DAY = 60*60*24
         time_delta = min(DAY, timestamp - self.last_checkin)
@@ -137,10 +136,10 @@ class Fish:
         Returns:
             Float from 0-1 of how hungry the fish is with 0 being completely full
         """
-        if not timestamp:
+        if timestamp is None:
             timestamp = time.time()
         hunger = (timestamp - self.last_fed)/self.species.hunger_time
-        return hunger
+        return min(hunger, 1)
 
     def to_json(self) -> dict:
         """Gets dict for serializing to json
