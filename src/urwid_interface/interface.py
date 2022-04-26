@@ -8,6 +8,13 @@ from src.urwid_interface.text_prompt import TextPrompt
 from src.urwid_interface.tank_widget import TankWidget
 from src.urwid_interface.popup import Popup
 
+PALETTE = [
+    ('banner', '', '', '', '#ffa', '#60d'),
+    ('green', '', '', '', '#151', ''),
+    ('sand', '', '', '', '#a81', ''),
+    ('goldfish', '', '', '', '#ff1', ''),
+    ('water', '', '', '', '#08b', ''),
+]
 
 class Interface:
     """Command line interface for interacting with the tank and fish.
@@ -58,7 +65,8 @@ class Interface:
                                                self.tank_widget,
                                                urwid.Divider(),
                                                self.bottom_widget]))
-        self.loop = urwid.MainLoop(main_widget)
+        self.loop = urwid.MainLoop(main_widget, PALETTE)
+        self.loop.screen.set_terminal_properties(colors=256)
         self.tank_widget.start_animation(self.loop)
         self.loop.run()
 
@@ -91,7 +99,6 @@ class Interface:
     def status_button_action(self, _):
         """Get the status of all fish."""
         status = '\n'.join(self.tank.get_status())
-        # status = '\n'.join([fish.get_status() for fish in self.tank.fish])
         popup = Popup(message=('yellow', status), callback=self.main_menu)
         self.bottom_widget.original_widget = popup
 

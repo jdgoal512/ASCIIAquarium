@@ -17,16 +17,19 @@ def tank_widget():
     fish += [FishArt(sample_fish, x=1, y=1)]
     fish += [FishArt(sample_fish, x=1, y=1)]
     fish += [FishArt(sample_fish, x=1, y=1)]
-    fish += [FishArt(sample_fish, x=DEFAULT_WIDTH, y=DEFAULT_HEIGHT)]
-    fish += [FishArt(sample_fish, x=DEFAULT_WIDTH, y=DEFAULT_HEIGHT)]
-    fish += [FishArt(sample_fish, x=DEFAULT_WIDTH, y=DEFAULT_HEIGHT)]
+    max_x = DEFAULT_WIDTH - len(sample_fish.species.art[0])
+    fish += [FishArt(sample_fish, x=max_x, y=DEFAULT_HEIGHT)]
+    fish += [FishArt(sample_fish, x=max_x, y=DEFAULT_HEIGHT)]
+    fish += [FishArt(sample_fish, x=max_x, y=DEFAULT_HEIGHT)]
     return TankWidget(height=DEFAULT_HEIGHT,
                       width=DEFAULT_WIDTH,
                       fish=fish,
                       refresh_rate=1)
 
 
-def test_get_rows(tank_widget):
-    """Check for any IndexErrors while moving fish"""
+def test_move_fish(tank_widget):
     for _ in range(1000):
-        tank_widget.get_tank_rows()
+        tank_widget.move_fish()
+        for fish in tank_widget.fish:
+            assert 0 < fish.x <= DEFAULT_WIDTH - len(fish.get_art())
+            assert 0 < fish.y <= DEFAULT_HEIGHT
