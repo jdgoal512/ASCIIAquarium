@@ -10,17 +10,24 @@ from src.urwid_interface.text_buffer import TextBuffer
 
 
 BACKGROUND = [
-    r'+==============================+',
+    [r'+==============================+'],
     [r'|', ('water', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'), '|'],
-    r'|                              |',
-    r'|                              |',
-    r'|                              |',
-    [r'|   ', ('green', 'o\o'), '                        |'],
-    [r'|   ', ('green', 'o/o'), '                        |'],
-    [r'|   ', ('green', 'o\o              \\\\  /'), '     |'],
-    [r'|   ', ('green', 'o/o  o\\o        \\ \\| \\'), '     |'],
-    [r'|   ', ('green', 'o\o  o/o         |/|//'), '     |'],
-    [r'|   ', ('green', 'o/o  o\o          \|/'), '      |'],
+    [r'|                              |'],
+    [r'|   ', ('light_green', r'~|~'), '                        |'],
+    [r'|   ', ('light_green', r'~|~'), '                    ',
+     ('green', '/'), '   |'],
+    [r'|   ', ('light_green', r'~|~'), '              ',
+     ('green', '_'), '    ', ('green', '/'), ' ', ('green', '_'), '  |'],
+    [r'|   ', ('light_green', r'~|~'), '               ', ('green', '\\'),
+     '  ', ('green', '|'), ' ', ('green', '/'), '   |'],
+    [r'|   ', ('light_green', r'~|~'), '                ', ('green', '\\'),
+     ' ', ('green', r'|//'), '   |'],
+    [r'|   ', ('light_green', r'~|~'), ' ', ('light_green', r'~|~'),
+     '       ', ('rock', '___'), ' ', ('green', '\ \| \\'), '   |'],
+    [r'|   ', ('light_green', r'~|~'), ' ', ('light_green', r'~|~'),
+     '    ', ('rock', '__/ __\\'), ' ', ('green', '|/|//'), '   |'],
+    [r'|   ', ('light_green', r'~|~'), ' ', ('light_green', r'~|~'),
+     '   ', ('rock', '/   /  \\\\'), ' ', ('green', r'\|/'), '    |'],
     [r'+', ('sand', '##############################'), '+'],
 ]
 
@@ -102,7 +109,7 @@ class TankWidget(urwid.BoxAdapter):
             self.text_buffer.add_text(x=fish.x,
                                     y=fish.y,
                                     text=fish.get_art(),
-                                    formatting='goldfish')
+                                    formatting=fish.palette_name)
         tank_rows = self.text_buffer.to_urwid()
         for pile_row, tank_row in zip(self.pile.contents, tank_rows):
             pile_row[0].set_text(tank_row)

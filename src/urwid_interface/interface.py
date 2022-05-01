@@ -8,32 +8,41 @@ from src.urwid_interface.text_prompt import TextPrompt
 from src.urwid_interface.tank_widget import TankWidget
 from src.urwid_interface.popup import Popup
 
-PALETTE = [
-    ('banner', '', '', '', '#ffa', '#60d'),
-    ('green', '', '', '', '#151', ''),
-    ('sand', '', '', '', '#a81', ''),
-    ('goldfish', '', '', '', '#ff1', ''),
-    ('water', '', '', '', '#08b', ''),
-]
 
 class Interface:
     """Command line interface for interacting with the tank and fish.
 
     Attributes:
         tank: The tank.
-        color: Whether or not to enable printing in color.
+        bottom_widget: Urwid widget at the bottom of the tank.
+        tank_widget: Urwid widget for ascii fish tank.
+        palette: Urwid color palette.
+        screen: Urwid screen for registering new palette entries.
+
     """
     def __init__(self, tank: Tank,
-                 filename: str = 'save.json',
-                 color: bool = True):
+                 filename: str = 'save.json'):
         self.tank = tank
         self.filename = filename
-        self.color = color
         self.bottom_widget = None
+        self.screen = None
         self.tank_widget = TankWidget(height=self.tank.height,
                                       width=self.tank.width)
+
+        self.palette = [
+            ('banner', '', '', '', '#ffa', '#60d'),
+            ('green', '', '', '', '#151', ''),
+            ('light_green', '', '', '', '#5c5', ''),
+            ('sand', '', '', '', '#a81', ''),
+            ('goldfish', '', '', '', '#ff1', ''),
+            ('water', '', '', '', '#08b', ''),
+            ('rock', '', '', '', '#587', ''),
+        ]
+
         for fish in self.tank.fish:
             self.tank_widget.add_fish(fish)
+            self.palette += [(f'fish_{fish.name}', '', '', '', fish.color, '')]
+
         self.loop = None
 
         menu_items = [
@@ -65,7 +74,8 @@ class Interface:
                                                self.tank_widget,
                                                urwid.Divider(),
                                                self.bottom_widget]))
-        self.loop = urwid.MainLoop(main_widget, PALETTE)
+        self.screen = urwid.raw_display.Screen()
+        self.loop = urwid.MainLoop(main_widget, self.palette, screen=self.screen)
         self.loop.screen.set_terminal_properties(colors=256)
         self.tank_widget.start_animation(self.loop)
         self.loop.run()
@@ -172,6 +182,12 @@ class Interface:
                                                         species_name=species,
                                                         personality_name=personality)
             self.tank.add_fish(new_fish)
+            self.screen.register_palette_entry(name=f'fish_{new_fish.name}',
+                                             foreground='',
+                                             background='',
+                                             mono='',
+                                             foreground_high=new_fish.color,
+                                             background_high='')
             self.tank_widget.add_fish(new_fish)
             self.main_menu()
         name_prompt = TextPrompt(f'What do you want to name your {species}?\n', add_fish)

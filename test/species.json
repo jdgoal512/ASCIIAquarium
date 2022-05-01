@@ -2,6 +2,7 @@
     "DEV_FISH": {
         "hunger_time": 10,
         "art": ["baby", "juvenile", "adult"],
-        "art_ages": [10, 100]
+        "art_ages": [10, 100],
+        "colors": ["#f00", "#0f0", "#00f"]
     }
 }

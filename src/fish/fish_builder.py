@@ -62,4 +62,5 @@ class FishBuilder:
                     last_fed=fish_json.get("last_fed", 0),
                     stress=fish_json.get("stress", 0.5),
                     last_checkin=fish_json.get("last_checkin", 0),
-                    time_fed=fish_json.get("time_fed", 0))
+                    time_fed=fish_json.get("time_fed", 0),
+                    color=fish_json.get('color', species.get_color()))

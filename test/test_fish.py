@@ -60,3 +60,6 @@ def test_time_fed(fish):
     fish.last_fed = 200  # Feed it
     fish.checkin(205)
     assert fish.time_fed == 25
+
+def test_color(fish):
+    assert fish.color in ["#f00", "#0f0", "#00f"]

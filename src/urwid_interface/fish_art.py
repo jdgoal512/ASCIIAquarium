@@ -47,12 +47,14 @@ class FishArt:
 
     Attributes:
         fish: The fish the art is for.
+        palette_name: Name of the palette for coloring the fish.
         x: x position of the fish (0 is far left).
         y: y position of the fish (0 is top).
     """
 
     def __init__(self, fish: Fish, x: int, y: int):
         self.fish = fish
+        self.palette_name = f'fish_{fish.name}'
         self.x = x
         self.y = y
         self.flipped = random.random() > 0.5

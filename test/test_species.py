@@ -22,5 +22,12 @@ def test_get_species_art(species):
     assert species.get_art(101) == "adult"
 
 
+def test_colors(species):
+    assert species.get_color() in ["#f00", "#0f0", "#00f"]
+    colors = [species.get_color() for _ in range(100)]
+    assert "#f00" in colors
+    assert "#0f0" in colors
+    assert "#00f" in colors
+
 def test_to_json(species):
     assert species.to_json() == "DEV_FISH"

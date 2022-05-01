@@ -16,6 +16,7 @@ class Fish:
         stress: Float from 0-1 of how stressed the fish is, 0 being no stress.
         last_checkin: Timestamp of when the stress was last updated.
         time_fed: Time in seconds of how long the fish has been fed.
+        color: String of the fish's color.
     """
     def __init__(self,
                  name: str,
@@ -25,7 +26,8 @@ class Fish:
                  birth: float = None,
                  stress: float = 0.25,
                  last_checkin: float = None,
-                 time_fed: float = 0):
+                 time_fed: float = 0,
+                 color: str = None):
         self.name = name
         self.species = species
         self.personality = personality
@@ -43,6 +45,10 @@ class Fish:
             self.last_checkin = last_checkin
         else:
             self.last_checkin = time.time()
+        if color is not None:
+            self.color = color
+        else:
+            self.color = species.get_color()
 
     def get_status(self) -> str:
         """Gets a summary on the fish's current status.
@@ -156,5 +162,6 @@ class Fish:
             "time_fed": self.time_fed,
             "stress": self.stress,
             "last_checkin": self.last_checkin,
+            "color": self.color,
         }
         return json_object
